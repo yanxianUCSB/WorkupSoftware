@@ -7,25 +7,17 @@ This is implemented in newWorkup and called exclusively there.
 # Functions to import #{{{
 from pyspecdata import fornotebook as fnb
 from pyspecdata import eprDI
-import time
-from scipy.interpolate import interp1d
-from lmfit import minimize,Parameters ### This makes another hoop for installing software that you don't really use... I actually really think this should be implemented as nddata functions. Or as fit classes.
-# from databaseRunner import SelectionWindow
-import shutil
 from pyspecdata import nmrfit
 from pyspecdata import nmr
 from pyspecdata import matlablike as pys
-# from PyQt4 import QtGui, QtCore
-import pymongo
-import os
-import csv
-from io import StringIO
 from pyspecdata import database as dtb
-import sys
-import subprocess
-import pickle
-from scipy.io import loadmat,savemat
+from lmfit import minimize,Parameters ### This makes another hoop for installing software that you don't really use... I actually really think this should be implemented as nddata functions. Or as fit classes.
+from io import StringIO
 from numpy import *#}}}
+import shutil
+import pymongo
+import csv
+import subprocess
 
 #{{{ Various definitions and classes
 

@@ -1,6 +1,8 @@
 """
 This script rewrites "newWorkup.py" by using tkinter instead of PyQt4
 """
+import returnIntegralsDev
+# import test
 import sys, os
 import tkinter as tk
 import tkinter.filedialog as tkfd
