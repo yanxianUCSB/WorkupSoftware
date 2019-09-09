@@ -1,0 +1,3 @@
+[submodule "pyspecdata"]
+	path = pyspecdata
+	url = https://github.com/yanxianucsb/pyspecdata
