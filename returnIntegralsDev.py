@@ -5,22 +5,22 @@ This is implemented in newWorkup and called exclusively there.
 
 """
 # Functions to import #{{{
-import fornotebook as fnb
-import eprDI
+from pyspecdata import fornotebook as fnb
+from pyspecdata import eprDI
 import time
 from scipy.interpolate import interp1d
 from lmfit import minimize,Parameters ### This makes another hoop for installing software that you don't really use... I actually really think this should be implemented as nddata functions. Or as fit classes.
-from databaseRunner import SelectionWindow
+# from databaseRunner import SelectionWindow
 import shutil
-import nmrfit
-import nmr
-import matlablike as pys
-from PyQt4 import QtGui, QtCore
+from pyspecdata import nmrfit
+from pyspecdata import nmr
+from pyspecdata import matlablike as pys
+# from PyQt4 import QtGui, QtCore
 import pymongo
 import os
 import csv
 from io import StringIO
-import database as dtb
+from pyspecdata import database as dtb
 import sys
 import subprocess
 import pickle
@@ -159,13 +159,13 @@ def makeTitle(titleString):
     print(linelength*"*")
 #}}}
 
-#{{{ My widget class, the minimum for opening a file dialog. There is much more you can do here but for now this will work.
-class my_widget_class (QtGui.QDialog):
-    # here, I use the QDialog class, which has accept and reject, and I add the following custom routines, which I can call as slots
-    def my_initialize_directories(self):
-        self.currently_displayed_datadir = ''
-        self.datadir_changed = False
-#}}}
+# #{{{ My widget class, the minimum for opening a file dialog. There is much more you can do here but for now this will work.
+# class my_widget_class (QtGui.QDialog):
+#     # here, I use the QDialog class, which has accept and reject, and I add the following custom routines, which I can call as slots
+#     def my_initialize_directories(self):
+#         self.currently_displayed_datadir = ''
+#         self.datadir_changed = False
+# #}}}
 
 #{{{ Class function for grabbing python output. ->> This should be moved to fornotebook
 class Capturing(list):
@@ -421,21 +421,21 @@ class workupODNP(): #{{{ The ODNP Experiment
         #    #}}}
         ##}}}
 
-    def editDatabase(self):#{{{
-        """ Query to edit the database parameters """
-        msg = 'Do you want to write your data to the database?'
-        reply = QtGui.QMessageBox.question(self.guiParent, 'Database Information', msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes: # you want to save the data so edit the databaseParamsDict and set database to true.
-            self.guiParent.dataBase = True
-            frame = SelectionWindow(parent = self.guiParent)
-            frame.exec_()
-            self.collection = frame.collection
-            self.databaseParamsDict = frame.databaseParamsDict
-            self.guiParent.textBrowser.clear()
-            for key in list(self.databaseParamsDict.keys()):
-                self.guiParent.textBrowser.append(str(key) + ' ' + str(self.databaseParamsDict.get(key)))
-        else:
-            self.guiParent.dataBase = False#}}}
+    # def editDatabase(self):#{{{
+    #     """ Query to edit the database parameters """
+    #     msg = 'Do you want to write your data to the database?'
+    #     reply = QtGui.QMessageBox.question(self.guiParent, 'Database Information', msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+    #     if reply == QtGui.QMessageBox.Yes: # you want to save the data so edit the databaseParamsDict and set database to true.
+    #         self.guiParent.dataBase = True
+    #         frame = SelectionWindow(parent = self.guiParent)
+    #         frame.exec_()
+    #         self.collection = frame.collection
+    #         self.databaseParamsDict = frame.databaseParamsDict
+    #         self.guiParent.textBrowser.clear()
+    #         for key in list(self.databaseParamsDict.keys()):
+    #             self.guiParent.textBrowser.append(str(key) + ' ' + str(self.databaseParamsDict.get(key)))
+    #     else:
+    #         self.guiParent.dataBase = False#}}}
 
     def editExpDict(self):#{{{
         """ Instead of using raw input you need to use this gettext functionality from Qt. This will work until you make a dialog to do this.
