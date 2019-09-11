@@ -18,6 +18,9 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
     child class workupODNP located in returnIntegralsDev.py
     """
     def __init__(self, master=None):
+        # Initialize the workup script
+        self.retInt = returnIntegralsDev.workupODNP(self)
+
         # variable definitions
         self.dataDir    = tk.StringVar()
         self.odnpFile   = tk.StringVar()
@@ -97,10 +100,33 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
         self.runExperiment()
         self.refreshDisplay()
 
-    def runExperiment(self):  # {{{
+    def runExperiment(self):
         """ Make the calls to run the odnp experimental workup from 
         returnIntegralsDev """
-        pass
+        self.retInt.determineExpType()
+        self.retInt.editDatabase()
+        if self.retInt.nmrExp: self.retInt.returnExpNumbers()
+        self.retInt.returnExpParamsDict()
+        ### # if self.retInt.nmrExp: self.retInt.determineExperiment() # Should no longer be needed, hang on to incase you need something.
+        ### # else: print "EPR Experiment"
+        ### # self.retInt.determineDatabase()
+        ### On windows you cannot run from the command line any interaction with raw_input is rejected
+        if self.retInt.nmrExp: self.retInt.readSpecType()
+        if self.retInt.nmrExp: self.retInt.editExpDict()
+        if self.retInt.eprExp: self.retInt.editExpDictEPR()
+        # if self.retInt.writeToDB: self.retInt.editDatabaseDict()
+        returnIntegralsDev.makeTitle("  Running Workup  ")
+        if self.retInt.eprExp: self.retInt.returnEPRData()
+        if self.retInt.dnpexp: self.retInt.dnpPowers()
+        if self.retInt.dnpexp: self.retInt.enhancementIntegration()
+        if self.retInt.nmrExp: self.retInt.T1Integration()
+        if self.retInt.dnpexp: self.retInt.makeT1PowerSeries()
+        if self.retInt.dnpexp: self.retInt.compKsigma()
+        if self.dataBase: self.retInt.writeToDatabase()
+        self.retInt.dumpAllToCSV()
+        self.retInt.writeExpParams()
+        returnIntegralsDev.compilePDF(self.retInt.name, self.retInt.odnpName,
+                                      self.retInt.fl)
 
 root = tk.Tk()
 app = initialWindow(master=root)

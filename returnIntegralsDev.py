@@ -13,7 +13,8 @@ from pyspecdata import matlablike as pys
 from pyspecdata import database as dtb
 from lmfit import minimize,Parameters ### This makes another hoop for installing software that you don't really use... I actually really think this should be implemented as nddata functions. Or as fit classes.
 from io import StringIO
-from numpy import *#}}}
+from numpy import *
+import os
 import shutil
 import pymongo
 import csv
