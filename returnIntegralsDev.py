@@ -19,6 +19,7 @@ import shutil
 import pymongo
 import csv
 import subprocess
+import tkinter as tk
 
 #{{{ Various definitions and classes
 
@@ -145,7 +146,7 @@ def makeTitle(titleString):
     linelength = 60
     titleLength = int((linelength - len(titleString))/2.) 
     titlePrint = titleLength*"*"+ titleString+titleLength*"*"
-    if titlePrint > linelength:
+    if len(titlePrint) > linelength:
         titlePrint = titlePrint[1:-1]
     print(linelength*"*")
     print(titlePrint)
@@ -436,14 +437,56 @@ class workupODNP(): #{{{ The ODNP Experiment
 
         Cancel should stop the workup.
         """
-        paramsToEdit = [['t1StartingGuess','Enter the T1 Guess (s):'],['integrationWidth','Enter the Integration Width (Hz):'],['t1SeparatePhaseCycle','separate phase cycle yes = 1, no = 0:']]
-        for dictKey,textToWrite in paramsToEdit:
-            text, ok = QtGui.QInputDialog.getText(self.guiParent, 'Experimental Parameters', textToWrite,QtGui.QLineEdit.Normal,str(self.parameterDict.get(dictKey)))
-            if ok:
-                self.parameterDict[dictKey]=float(text)
-                print(self.parameterDict[dictKey])
-        dtb.writeDict(self.expParametersFile,self.parameterDict)
-#}}}
+        class Dialog(tk.Frame):  # TODO:// make a separate file
+            def __init__(self, master, creator):
+                super().__init__(master)
+                self.master = master
+                self.creator = creator
+                self.pack()
+
+                self.T1Guess = tk.DoubleVar(self, value=2.5)
+                self.intWidth = tk.DoubleVar(self, value=75)
+                self.sepPhCyl = tk.DoubleVar(self, value=0)  # TODO: change into BooleanVar
+
+                self.makeform(
+                    fields=('Enter the T1 Guess (s):',
+                     'Enter the Integration Width (Hz):',
+                     'separate phase cycle yes = 1, no = 0:'),
+                    variables=(self.T1Guess,
+                     self.intWidth,
+                     self.sepPhCyl)
+                )
+                tk.Button(self, text='OK', command=self.run).pack()
+
+            def makeform(self, fields, variables):
+                """A tkinter function to generate a form
+
+                Args:
+                    root: A Tk object
+                    fields: A list of strings 
+                    variables: A list of Tk Variables
+                """
+
+                # TODO: assert fields and variables have same length
+                for i in range(len(fields)):
+                    row = tk.Frame(self)
+                    lab = tk.Label(row, width=22, text=fields[i] + ": ", anchor='w')
+                    ent = tk.Entry(row, textvariable=variables[i])
+                    row.pack(side=tk.TOP, fill=tk.X, padx=5, pady=5)
+                    lab.pack(side=tk.LEFT)
+                    ent.pack(side=tk.RIGHT, expand=tk.YES, fill=tk.X)
+
+            def run(self):
+                self.creator.parameterDict['t1StartingGuess'] = self.T1Guess.get()
+                self.creator.parameterDict['integrationWidth'] = self.intWidth.get()
+                self.creator.parameterDict['t1SeparatePhaseCycle'] = self.sepPhCyl.get()
+                dtb.writeDict(self.creator.expParametersFile, self.creator.parameterDict)
+                self.quit()
+
+        dialog = Dialog(master=tk.Tk(), creator=self)
+        dialog.mainloop(n=1)
+
+        print(self.parameterDict.keys, self.parameterDict.values)
 
     def editExpDictEPR(self):#{{{
         """ Instead of using raw input you need to use this gettext functionality from Qt. This will work until you make a dialog to do this.

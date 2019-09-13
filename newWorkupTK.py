@@ -28,21 +28,32 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
         self.eprFile    = tk.StringVar()
         self.eprCalFile = tk.StringVar()
 
+        # variable definitions from last version  # TODO: // remove this chunk
+        self.EPRFile = False
+        self.ODNPFile = False
+        self.T1File = False
+        self.dataBase = False
+        self.dataDirFile = 'datadir.txt'
+        self.DataDir = None
+        self.calSaveFile = 'calFile.txt'
+        self.EPRCalFile = False
+        self.dataBaseList = ['Select Value','Yes','No']#}}}
+
         super().__init__(master)
         self.master = master
         self.pack()
         self.create_widgets()
 
     def create_widgets(self):
-        tk.Button(self, text="load data dir", command=self.DataDirOpened).pack()
+        tk.Button(self, text="Load Data Directory", command=self.DataDirOpened).pack()
         tk.Entry(self, textvariable=self.dataDir).pack()
-        tk.Button(self, text="load ODNP file", command=self.ODNPOpened).pack()
+        tk.Button(self, text="Load ODNP Folder", command=self.ODNPOpened).pack()
         tk.Entry(self, textvariable=self.odnpFile).pack()
-        tk.Button(self, text="load T1 file", command=self.T1Opened).pack()
+        tk.Button(self, text="Load T1 File", command=self.T1Opened).pack()
         tk.Entry(self, textvariable=self.t1File).pack()
-        tk.Button(self, text="load EPR file", command=self.EPROpened).pack()
+        tk.Button(self, text="Load EPR File", command=self.EPROpened).pack()
         tk.Entry(self, textvariable=self.eprFile).pack()
-        tk.Button(self, text="load EPR Calibration file", command=self.EPRCalOpened).pack()
+        tk.Button(self, text="Load EPR Calibration File", command=self.EPRCalOpened).pack()
         tk.Entry(self, textvariable=self.eprCalFile).pack()
         tk.Button(self, text="run", command=self.runProgram).pack()
         tk.Button(self, text="save data", command=self.saveDataDir).pack()
@@ -52,6 +63,7 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
     def DataDirOpened(self):
         """ Handling to open the file browser to choose the data directory """
         self.dataDir.set(tkfd.askdirectory())
+        self.DataDir = self.dataDir.get()
 
     def dbComboChanged(self):
         """ Handling for the database combo box """
@@ -61,15 +73,16 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
         """ Handling for the ODNP file browser button """
         self.odnpFile.set(tkfd.askdirectory(
             initialdir=self.dataDir.get() if self.dataDir.get() else os.getcwd()))
+        self.ODNPFile = self.odnpFile.get()
 
     def T1Opened(self):
         """ Handling for the T1 file browser button """
-        self.t1File.set(tkfd.askdirectory(
+        self.t1File.set(tkfd.askopenfilename(
             initialdir=self.dataDir.get() if self.dataDir.get() else os.getcwd()))
 
     def EPROpened(self):
         """ Handling for the EPR file browser button """
-        self.eprFile.set(tkfd.askdirectory(
+        self.eprFile.set(tkfd.askopenfilename(
             initialdir=self.dataDir.get() if self.dataDir.get() else os.getcwd()))
 
     def EPRCalOpened(self):  # {{{
@@ -104,7 +117,7 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
         """ Make the calls to run the odnp experimental workup from 
         returnIntegralsDev """
         self.retInt.determineExpType()
-        self.retInt.editDatabase()
+        # self.retInt.editDatabase()
         if self.retInt.nmrExp: self.retInt.returnExpNumbers()
         self.retInt.returnExpParamsDict()
         ### # if self.retInt.nmrExp: self.retInt.determineExperiment() # Should no longer be needed, hang on to incase you need something.
