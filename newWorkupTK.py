@@ -99,7 +99,7 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
         """ Handling for the run program button to launch the return integrals 
         workup program """
         # Initialize the workup script
-        self.retInt = returnIntegralsDev.workupODNP(guiParent=self)
+        self.retInt = returnIntegralsDev.workupODNP()
 
         # variable definitions from last version  # TODO: // remove this chunk
         self.DataDir    = self.dataDir.get()
@@ -107,6 +107,12 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
         self.T1File     = self.t1File.get()
         self.EPRFile    = self.eprFile.get()
         self.EPRCalFile = self.eprCalFile.get()
+        self.retInt.DataDir    = self.DataDir
+        self.retInt.ODNPFile   = self.ODNPFile
+        self.retInt.T1File     = self.T1File
+        self.retInt.EPRFile    = self.EPRFile
+        self.retInt.EPRCalFile = self.EPRCalFile
+
         self.dataBase = False  # TODO: // remove this chunk
         self.dataDirFile = 'datadir.txt'
         self.calSaveFile = 'calFile.txt'

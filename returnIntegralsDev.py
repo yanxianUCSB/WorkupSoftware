@@ -220,33 +220,41 @@ eprName = '/Users/StupidRobot/exp_data/ryan_emx/epr/150615_CheYSeries/A97C_MTSL_
 class workupODNP(): #{{{ The ODNP Experiment
     # note this is not the way to pass the program
     # a parent instance as this will not work in the current configuration.
-    def __init__(self, guiParent):
+    def __init__(self):
         # import everything from the parent gui into this child class.
         # This way we can manipulate the gui from here.
-        self.guiParent = guiParent
+        # Why on earth a child class wants to modify its parent??
+        # self.guiParent = guiParent
         self.runningDir = os.getcwd()
         self.systemOpt = os.name
         self.dataFile = 'ODNPOutput.csv'
         self.fl = fnb.figlist()
 
+        # properties of workupODNP so that guiParent can modify
+        self.DataDir = ""
+        self.ODNPFile = ""
+        self.T1File = ""
+        self.EPRFile = ""
+        self.EPRCalFile = ""
 
-    # Class Specific Functions (Children) #{{{
+
+        # Class Specific Functions (Children) #{{{
     def determineExpType(self): #{{{
         """ Determine the experiment type and label variables accordingly. 
         Also make the directory for the file to go. """
-        if self.guiParent.EPRFile is not "":
-            self.eprName = self.guiParent.EPRFile.split('.')[0]
+        if self.EPRFile is not "":
+            self.eprName = self.EPRFile.split('.')[0]
             self.eprExp = True
         else:
             self.eprName = False
             self.eprExp = False
-        if self.guiParent.ODNPFile is not "":
-            self.odnpPath = self.guiParent.ODNPFile
+        if self.ODNPFile is not "":
+            self.odnpPath = self.ODNPFile
             self.nmrExp = True
             self.dnpexp = True
             self.setType = 'dnpExp'
-        elif self.guiParent.T1File is not "":
-            self.odnpPath = self.guiParent.T1File
+        elif self.T1File is not "":
+            self.odnpPath = self.T1File
             self.nmrExp = True
             self.dnpexp = False
             self.setType = 't1Exp'
@@ -276,10 +284,10 @@ class workupODNP(): #{{{ The ODNP Experiment
             self.odnpName = self.odnpPath + '/Workup/'
             if self.eprName:
                 self.eprFileName = self.eprName.split('/')[-1]#}}}
-        # Write parameters to the parent 
-        self.guiParent.name = self.name
-        self.guiParent.setType = self.setType
-        # make the experiment directory to dump all of the high level data
+        # # Write parameters to the parent
+        # self.guiParent.name = self.name
+        # self.guiParent.setType = self.setType
+        # # make the experiment directory to dump all of the high level data
         try:
             os.mkdir(self.odnpPath)
         except:
@@ -309,7 +317,13 @@ class workupODNP(): #{{{ The ODNP Experiment
                     #}}}
 
     def returnEPRData(self): #{{{ EPR Workup stuff
-        self.spec,self.lineWidths,self.spectralWidth,self.centerField,self.doubleIntZC,self.doubleIntC3,self.diValue,self.spinConc = eprDI.workupCwEpr(self.eprName,self.parameterDict.get('spectralWidthMultiplier'),numPeaks=int(self.parameterDict.get('numPeaks')),EPRCalFile=self.guiParent.EPRCalFile,firstFigure=self.fl.figurelist)
+        self.spec, self.lineWidths, self.spectralWidth, self.centerField, \
+        self.doubleIntZC, self.doubleIntC3, self.diValue, self.spinConc = \
+            eprDI.workupCwEpr(
+                self.eprName, self.parameterDict.get('spectralWidthMultiplier'),
+                numPeaks=int(self.parameterDict.get('numPeaks')),
+                EPRCalFile=self.EPRCalFile,
+                firstFigure=self.fl.figurelist)
         """
         Perform the epr baseline correction and double integration.
 
@@ -501,16 +515,17 @@ class workupODNP(): #{{{ The ODNP Experiment
         print(self.parameterDict.keys, self.parameterDict.values)
 
     def editExpDictEPR(self):#{{{
-        """ Instead of using raw input you need to use this gettext functionality from Qt. This will work until you make a dialog to do this.
-        Edit the experimental parameters dict
-        """
-        paramsToEdit = [['spectralWidthMultiplier','Enter the multiplier for the EPR spectral width.'],['numPeaks','Enter the number of peaks in you EPR spectra.']]
-        for dictKey,textToWrite in paramsToEdit:
-            text, ok = QtGui.QInputDialog.getText(self.guiParent, 'Experimental Parameters', textToWrite,QtGui.QLineEdit.Normal,str(self.parameterDict.get(dictKey)))
-            if ok:
-                self.parameterDict[dictKey]=float(text)
-                print(self.parameterDict[dictKey])
-        dtb.writeDict(self.expParametersFile,self.parameterDict)
+        raise NotImplementedError
+        # """ Instead of using raw input you need to use this gettext functionality from Qt. This will work until you make a dialog to do this.
+        # Edit the experimental parameters dict
+        # """
+        # paramsToEdit = [['spectralWidthMultiplier','Enter the multiplier for the EPR spectral width.'],['numPeaks','Enter the number of peaks in you EPR spectra.']]
+        # for dictKey,textToWrite in paramsToEdit:
+        #     text, ok = QtGui.QInputDialog.getText(self.guiParent, 'Experimental Parameters', textToWrite,QtGui.QLineEdit.Normal,str(self.parameterDict.get(dictKey)))
+        #     if ok:
+        #         self.parameterDict[dictKey]=float(text)
+        #         print(self.parameterDict[dictKey])
+        # dtb.writeDict(self.expParametersFile,self.parameterDict)
     #}}}
 
     def returnExpParamsDict(self): #{{{
