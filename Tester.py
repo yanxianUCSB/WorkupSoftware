@@ -22,6 +22,10 @@ class TestWorkupODNP(unittest.TestCase):
             workupODNP().determine_exp_type()
         pass
 
+    def test_resturn_exp_numbers(self):
+        if self.wo.isNMRExp:
+            self.wo.returnExpNumbers()
+
 
 if __name__ == '__main__':
     unittest.main()

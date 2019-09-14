@@ -237,72 +237,76 @@ class workupODNP(): #{{{ The ODNP Experiment
         self.EPRFile = ""
         self.EPRCalFile = ""
 
+        # properties of experiment type
+        self.setType = ""
+        self.expPath = ""
+        self.expName = ""
+        self.eprName = ""
+        self.odnpName = ""
+        self.eprFileName = ""
+        self.isEPRExp = False
+        self.isNMRExp = False
+        self.isDNPExp = False
 
-        # Class Specific Functions (Children) #{{{
+
+    # Class Specific Functions (Children) #{{{
     def determine_exp_type(self): #{{{
         """ Determine the experiment type and label variables accordingly. 
         Also make the directory for the file to go. """
         if self.EPRFile is not "":
             self.eprName = self.EPRFile.split('.')[0]
-            self.eprExp = True
-        else:
-            self.eprName = False
-            self.eprExp = False
+            self.isEPRExp = True
         if self.ODNPFile is not "":
-            self.odnpPath = self.ODNPFile
-            self.nmrExp = True
-            self.dnpexp = True
+            self.expPath = self.ODNPFile
+            self.isNMRExp = True
+            self.isDNPExp = True
             self.setType = 'dnpExp'
         elif self.T1File is not "":
-            self.odnpPath = self.T1File
-            self.nmrExp = True
-            self.dnpexp = False
+            self.expPath = self.T1File
+            self.isNMRExp = True
+            self.isDNPExp = False
             self.setType = 't1Exp'
         # if neither T1 or ODNP file exists it must be to work up the EPR
         # experiment alone.
+        elif self.isEPRExp:
+            self.expPath = self.eprName
+            self.isNMRExp = False
+            self.isDNPExp = False
+            self.setType = 'eprExp'
         else:
-            if self.eprName:
-                self.odnpPath = self.eprName
-                self.nmrExp = False
-                self.dnpexp = False
-                self.setType = 'eprExp'
-            else:
-                raise ValueError("You didn't give me an NMR experiment or an "
-                                 "EPR experiment. What the hell do you want "
-                                 "from me??")
+            raise ValueError("You didn't give me an NMR experiment or an "
+                             "EPR experiment. What the hell do you want "
+                             "from me??")
         # Some file handling stuff for cross platform compatibility
         # - Any OS specific change should be made here#{{{
         if self.systemOpt == 'nt':
-            self.name = self.odnpPath.split('\\')[-1]
+            self.expName = self.expPath.split('\\')[-1]
             self.runningDir += '\\'
-            self.odnpName = self.odnpPath + '\\Workup\\'
+            self.odnpName = self.expPath + '\\Workup\\'
             if self.eprName:
                 self.eprFileName = self.eprName.split('\\')[-1]
         elif self.systemOpt == 'posix':
-            self.name = self.odnpPath.split('/')[-1]
+            self.expName = self.expPath.split('/')[-1]
             self.runningDir += '/'
-            self.odnpName = self.odnpPath + '/Workup/'
+            self.odnpName = self.expPath + '/Workup/'
             if self.eprName:
-                self.eprFileName = self.eprName.split('/')[-1]#}}}
-        # # Write parameters to the parent
-        # self.guiParent.name = self.name
-        # self.guiParent.setType = self.setType
-        # # make the experiment directory to dump all of the high level data
+                self.eprFileName = self.eprName.split('/')[-1]
+        # make the experiment directory to dump all of the high level data
         try:
-            os.mkdir(self.odnpPath)
-        except:
+            os.mkdir(self.expPath)
+        except FileExistsError:
             print("folder exists")
-            pass#}}}
+            pass
         try:
             os.mkdir(self.odnpName)
-        except:
+        except FileExistsError:
             print("file exists")
             pass
 
     def readSpecType(self):#{{{
         """ Read the proc file to find which spectrometer the ODNP experiment 
         was run on. Used for the dBm to watt conversion. """
-        filetoread = os.path.abspath(self.odnpPath + '/5/pdata/1/proc') # this should return os specific filetype
+        filetoread = os.path.abspath(self.expPath + '/5/pdata/1/proc') # this should return os specific filetype
         openFile = open(filetoread,'r')
         lines = openFile.readlines()
         for line in lines:
@@ -574,7 +578,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         self.dnpExps - list - numbers of enhancement experiments.
         self.t1Exps - list - numbers of t1 experiments..
         """
-        filesInDir = pys.listdir(self.odnpPath)
+        filesInDir = pys.listdir(self.expPath)
         files = []
         for name in filesInDir:
             try:
@@ -585,7 +589,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         self.expTitles = []
         for name in files:
             try:
-                titleName = nmr.bruker_load_title(self.odnpPath + '/' + str(name).split('.')[0])
+                titleName = nmr.bruker_load_title(self.expPath + '/' + str(name).split('.')[0])
                 self.expTitles.append([titleName,str(name).split('.')[0]])
             except:
                 print("Well shit")
@@ -594,31 +598,31 @@ class workupODNP(): #{{{ The ODNP Experiment
         for title,name in self.expTitles:
             if 'DNP' in title:
                 try:
-                    temp = nmr.load_file(self.odnpPath+'/'+name) # this is the heavy line...
+                    temp = nmr.load_file(self.expPath + '/' + name) # this is the heavy line...
                     self.dnpExps.append(int(name))
                 except:
                     print("Not a valid experiment.")
             if 'baseline' in title:
                 try:
-                    temp = nmr.load_file(self.odnpPath+'/'+name)
+                    temp = nmr.load_file(self.expPath + '/' + name)
                     self.dnpExps.append(int(name))
                 except:
                     print("Not a valid experiment.")
             if 'T1' in title:
                 try:
-                    temp = nmr.load_file(self.odnpPath+'/'+name)
+                    temp = nmr.load_file(self.expPath + '/' + name)
                     self.t1Exps.append(int(name))
                 except:
                     print("Not a valid experiment.")
             if '$T_1$' in title:
                 try:
-                    temp = nmr.load_file(self.odnpPath+'/'+name)
+                    temp = nmr.load_file(self.expPath + '/' + name)
                     self.t1Exps.append(int(name))
                 except:
                     print("Not a valid experiment.")
             if 'T_{1,0}' in title:
                 try:
-                    temp = nmr.load_file(self.odnpPath+'/'+name)
+                    temp = nmr.load_file(self.expPath + '/' + name)
                     self.t1Exps.append(int(name))
                 except:
                     print("Not a valid experiment.")
@@ -637,18 +641,18 @@ class workupODNP(): #{{{ The ODNP Experiment
         """
         answer = True
         while answer:
-            self.dnpexp = input("\n\nIs this a DNP experiment or t1?\nIf DNP, hit enter. If t1 type 't1'. \n--> ")
-            if self.dnpexp == '': # DNP is True, T10 is False
-                self.dnpexp = True
+            self.isDNPExp = input("\n\nIs this a DNP experiment or t1?\nIf DNP, hit enter. If t1 type 't1'. \n--> ")
+            if self.isDNPExp == '': # DNP is True, T10 is False
+                self.isDNPExp = True
                 if self.eprName:
-                    self.eprExp = True
+                    self.isEPRExp = True
                 else:
-                    self.eprExp = False
+                    self.isEPRExp = False
                 answer = False # break while loop
                 self.setType = 'dnpExp'
-            elif self.dnpexp == 't1':
-                self.dnpexp = False
-                self.eprExp = False
+            elif self.isDNPExp == 't1':
+                self.isDNPExp = False
+                self.isEPRExp = False
                 answer = False # break while loop
                 self.setType = 't1Exp'
             else:
@@ -696,7 +700,7 @@ class workupODNP(): #{{{ The ODNP Experiment
             except:
                 pass
         self.databaseParamsDict.update({'setType':self.setType})
-        self.databaseParamsDict.update({'expName':self.name})
+        self.databaseParamsDict.update({'expName':self.expName})
         #}}}
         dtb.modDictVals(self.databaseParamsDict,databaseCollection=self.collection)
         self.databaseParamsDict = dtb.stringifyDictionary(self.databaseParamsDict) # force every entry to a string, this way there is no weirdness with the repeat and date entries or really anything that can be mistaken as a double.
@@ -714,7 +718,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         # this is not a good way because the experiment numbers must be set
         # right.
         exp_times, exp_time_min, abs_time = nmr.returnExpTimes(
-            self.odnpPath, self.dnpExps, dnpExp=True,
+            self.expPath, self.dnpExps, dnpExp=True,
             operatingSys=self.systemOpt)
         print("I read the length of abs_time = %i" % len(abs_time))
         if not exp_time_min:
@@ -724,7 +728,7 @@ class workupODNP(): #{{{ The ODNP Experiment
                 "scroll through the experiment titles above and set values "
                 "appropriately")
         enhancement_powers, self.fl.figurelist = nmr.returnSplitPowers(
-            self.odnpPath, 'power', absTime=abs_time,
+            self.expPath, 'power', absTime=abs_time,
             bufferVal=self.parameterDict['t1StartingGuess'],
             threshold=20, titleString=r'Enhancement\ Powers',
             firstFigure=self.fl.figurelist)
@@ -766,14 +770,14 @@ class workupODNP(): #{{{ The ODNP Experiment
                 self.fl.figurelist.append({'print_string': r"%s, exp number %s"%(title[0].split('\n')[0],title[1])})#}}}
             for exp in self.dnpExps:
                 self.fl.figurelist.append({'print_string': r"exp number %i"%(exp)})#}}}
-            compilePDF(self.name,self.odnpName,self.fl)
+            compilePDF(self.expName, self.odnpName, self.fl)
             raise ValueError("\n\n Something is weird with your powers file. Take a look at the pdf and see if you can make changes. Or just paste in a working powers file. Hint you might also find adjusting the threshold parameters helps.")
             #}}}
             #}}}
 
         # The T1 Power Series#{{{
         self.fl.figurelist.append({'print_string':r'\subparagraph{$T_1$ Power Measurement}' + '\n\n'})
-        exp_times, exp_time_min, abs_time = nmr.returnExpTimes(self.odnpPath,
+        exp_times, exp_time_min, abs_time = nmr.returnExpTimes(self.expPath,
                                                                self.t1Exps,
                                                                dnpExp=False,
                                                                operatingSys=self.systemOpt)  # this is not a good way because the experiment numbers must be set right.
@@ -788,7 +792,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         aquisition parameters. This should now work without having to ask the user.
         """
         t1_power, self.fl.figurelist = \
-            nmr.returnSplitPowers(self.odnpPath,
+            nmr.returnSplitPowers(self.expPath,
                                   't1_powers',
                                   absTime=abs_time,
                                   bufferVal=20 * self.parameterDict['t1StartingGuess'],
@@ -807,13 +811,13 @@ class workupODNP(): #{{{ The ODNP Experiment
             self.fl.figurelist.append({'print_string':r'\subsection{Experiment Titles and Experiment Number}' + '\n\n'})
             for titleName in self.expTitles:
                 self.fl.figurelist.append({'print_string':r"%s"%titleName})#}}}
-            compilePDF(self.name,self.odnpName,self.fl)
+            compilePDF(self.expName, self.odnpName, self.fl)
             raise ValueError("\n\n Something is weird with your powers file. Take a look at the pdf and see if you can make changes. Or just paste in a working powers file. Hint you might also find adjusting the threshold parameters helps.")
 
 
     def enhancementIntegration(self): #{{{ Enhancement Integration
         self.fl.figurelist.append({'print_string':r'\subparagraph{Enhancement Series}' + '\n\n'})
-        enhancementSeries,self.fl.figurelist = nmr.integrate(self.odnpPath,self.dnpExps,integration_width = self.parameterDict['integrationWidth'],max_drift = self.parameterDict['maxDrift'],phchannel = [-1],phnum = [4],first_figure = self.fl.figurelist)
+        enhancementSeries,self.fl.figurelist = nmr.integrate(self.expPath, self.dnpExps, integration_width = self.parameterDict['integrationWidth'], max_drift = self.parameterDict['maxDrift'], phchannel = [-1], phnum = [4], first_figure = self.fl.figurelist)
         enhancementSeries.rename('power','expNum').labels(['expNum'],[self.dnpExps])
         ### Fit and plot the Enhancement
         self.enhancementSeries = enhancementSeries.runcopy(real)
@@ -854,18 +858,18 @@ class workupODNP(): #{{{ The ODNP Experiment
         self.fl.figurelist.append({'print_string':r'\subparagraph{T_1 Series}' + '\n\n'})
         for count,expNum in enumerate(self.t1Exps):
             print("integrating data from expno %0.2f"%expNum)
-            if self.dnpexp:
+            if self.isDNPExp:
                 self.fl.figurelist.append({'print_string':r'$T_1$ experiment %d at power %0.2f dBm'%(expNum,self.t1Power[count]) + '\n\n'})
             else:
                 self.fl.figurelist.append({'print_string':r'$T_1$ experiment %d'%(expNum) + '\n\n'})
             try:
                 if self.parameterDict['t1SeparatePhaseCycle']: # The phase cycles are saved separately
-                    rawT1,self.fl.figurelist = nmr.integrate(self.odnpPath,expNum,integration_width = self.parameterDict['integrationWidth'],phchannel = [-1],phnum = [4],max_drift = self.parameterDict['maxDrift'],first_figure = self.fl.figurelist,pdfstring = 't1Expno_%d'%(expNum))
+                    rawT1,self.fl.figurelist = nmr.integrate(self.expPath, expNum, integration_width = self.parameterDict['integrationWidth'], phchannel = [-1], phnum = [4], max_drift = self.parameterDict['maxDrift'], first_figure = self.fl.figurelist, pdfstring ='t1Expno_%d' % (expNum))
                 else: # the phase cycle is already performed on the Bruker
-                    rawT1,self.fl.figurelist = nmr.integrate(self.odnpPath,expNum,integration_width = self.parameterDict['integrationWidth'],phchannel = [],phnum = [],max_drift = self.parameterDict['maxDrift'],first_figure = self.fl.figurelist,pdfstring = 't1Expno_%d'%(expNum))
+                    rawT1,self.fl.figurelist = nmr.integrate(self.expPath, expNum, integration_width = self.parameterDict['integrationWidth'], phchannel = [], phnum = [], max_drift = self.parameterDict['maxDrift'], first_figure = self.fl.figurelist, pdfstring ='t1Expno_%d' % (expNum))
                 rawT1.rename('power','delay')
                 print("pulling delay from expno %0.2f"%expNum)
-                delay = nmr.bruker_load_vdlist(self.odnpPath + '/%d/' %expNum)
+                delay = nmr.bruker_load_vdlist(self.expPath + '/%d/' % expNum)
                 rawT1 = rawT1['delay',0:len(delay)]
                 rawT1.labels(['delay'],[delay])
                 rawT1 = nmrfit.t1curve(rawT1.runcopy(real),verbose = False)
@@ -1011,7 +1015,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         # dump the metadata to a csv for viewing.
         dictToCSV(self.odnpName +'metadata',self.databaseParamsDict)
         dataDict = {}
-        if self.dnpexp:
+        if self.isDNPExp:
             if self.enhancementPowerSeries:
                 dim = self.enhancementPowerSeries.dimlabels[0]
                 fitList = [self.enhancementPowerSeries.output(r'E_{max}'),self.enhancementPowerSeries.output(r'v'),self.enhancementPowerSeries.output(r'A')]
@@ -1023,14 +1027,14 @@ class workupODNP(): #{{{ The ODNP Experiment
                 dim = self.kSigmaCCurve.dimlabels[0]
                 fitList = [self.kSigmaCCurve.output(r'ksmax'),self.kSigmaCCurve.output(r'phalf')]
                 dataDict.update({'kSigmaODNP':{'data':self.kSigmaCCurve.runcopy(real).data.tolist(),'error':self.kSigmaCCurve.get_error().tolist(),'dim0':self.kSigmaCCurve.getaxis(dim).tolist(),'dimNames':list(self.kSigmaCCurve.dimlabels),'value':self.kSigmaCCurve.output(r'ksmax'),'valueError':sqrt(self.kSigmaCCurve.covar(r'ksmax')),'fitList':fitList}})
-            if self.eprExp:
+            if self.isEPRExp:
                 dataDict.update({'cwEPR':{'data':self.spec.data.tolist(),'dataDI':self.doubleIntC3.data.tolist(),'dim0':self.spec.getaxis('field').tolist(),'dimNames':list(self.spec.dimlabels),'centerField':str(self.centerField),'mwFreq':str(self.spec.other_info.get('MF')),'lineWidths':list(self.lineWidths),'spectralWidth':str(self.spectralWidth),'doubleIntegral':str(self.diValue),'expDict':self.spec.other_info}})
         ### For the T10 experiment just write the T1 experiment series.
-        elif self.nmrExp: # Save the T10 values
+        elif self.isNMRExp: # Save the T10 values
             if self.t1Series:
                 dim = self.t1Series.dimlabels[0]
                 dataDict.update({'t1ODNP':{'data':self.t1Series.data.tolist(),'error':self.t1Series.get_error().tolist(),'dim0':self.t1Series.getaxis(dim).tolist(),'dimNames':list(self.t1Series.dimlabels)}})
-        elif self.eprExp:
+        elif self.isEPRExp:
             dataDict.update({'cwEPR':{'data':self.spec.data.tolist(),'dataDI':self.doubleIntC3.data.tolist(),'dim0':self.spec.getaxis('field').tolist(),'dimNames':list(self.spec.dimlabels[0]),'centerField':str(self.centerField),'mwFreq':str(self.spec.other_info.get('MF')),'lineWidths':list(self.lineWidths),'spectralWidth':str(self.spectralWidth),'doubleIntegral':str(self.diValue),'expDict':self.spec.other_info}})
 
         self.databaseParamsDict.update({'data':dataDict})
@@ -1038,7 +1042,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         #}}}
 
     def dumpAllToCSV(self): #{{{ Write everything to a csv file as well
-        if self.dnpexp:
+        if self.isDNPExp:
             if self.enhancementPowerSeries:
                 enhancementPowersWriter = [('power (W)','Integral','Exp Num')] + list(zip(list(self.enhancementPowerSeries.getaxis('power')),list(self.enhancementPowerSeries.data),list(self.enhancementSeries.getaxis('expNum')))) + [('\n')]
                 dataToCSV(enhancementPowersWriter,self.odnpName+'enhancementPowers.csv')
@@ -1059,20 +1063,20 @@ class workupODNP(): #{{{ The ODNP Experiment
 
             # write all relaxation parameters to file
             header = [('ODNP fileName','T1 (s)', 'T1 Error (s)', 'T1 Fit (s)','kSigma (s-1)','kSigma Error (s-1)')]
-            dataWriter = [(self.odnpPath,float(self.R1.data[0]),float(self.R1.get_error()[0]),float(self.t1PowerFitVal[0]),float(self.kSigmaC.data[0]),float(self.kSigmaC.get_error()[0]))]
+            dataWriter = [(self.expPath, float(self.R1.data[0]), float(self.R1.get_error()[0]), float(self.t1PowerFitVal[0]), float(self.kSigmaC.data[0]), float(self.kSigmaC.get_error()[0]))]
             fileExists = os.path.isfile(self.dataFile)
             if fileExists:
                 dataToCSV(dataWriter,self.dataFile,flag='a')
             else:
                 dataToCSV(header + dataWriter,self.dataFile,flag='a')
         ### Write the EPR
-        if self.eprExp:
+        if self.isEPRExp:
             eprWriter = list(zip(list(self.spec.getaxis('field')),list(self.spec.data),list(self.doubleIntC3.data)))
             dataToASC(eprWriter,self.odnpName+'eprSpec')
             self.specDict = {'epr':{'centerField':str(self.centerField),'lineWidths':list(self.lineWidths),'spectralWidth':str(self.spectralWidth),'doubleIntegral':str(self.diValue),'spinConcentration':str(self.spinConc),'expDict':self.spec.other_info}}
             dictToCSV(self.odnpName+'eprParams',self.specDict)
 
-        if self.nmrExp:
+        if self.isNMRExp:
             ### Write the t1 series
             t1SeriesWriter = [('t1Val (s)','error','expNum')] + list(zip(list(self.t1Series.data),list(self.t1Series.get_error()),list(self.t1Series.getaxis('expNum'))))
             dataToCSV(t1SeriesWriter,self.odnpName+'t1Series.csv')
@@ -1082,16 +1086,16 @@ class workupODNP(): #{{{ The ODNP Experiment
     #}}}
 
     def writeExpParams(self): ##{{{ Write out the relevant values from the DNP experiment
-        if self.dnpexp: # DNP is True, T10 is False
+        if self.isDNPExp: # DNP is True, T10 is False
             self.fl.figurelist.append({'print_string':'\n\n' + r'\subparagraph{DNP parameters} \\' + '\n\n'})
             self.fl.figurelist.append({'print_string':r'$\mathtt{k_{\sigma} S_{max} C = %0.5f \pm %0.5f \ (s^{-1})}$\\'%(self.kSigmaC.data,self.kSigmaC.get_error())})
             self.fl.figurelist.append({'print_string':r'$\mathtt{E_{max} = %0.3f \pm %0.3f \ (Unitless)}$\\'%(self.enhancementPowerSeries.output(r'E_{max}'),self.enhancementPowerSeries.covar(r'E_{max}')) + '\n\n'})
             self.fl.figurelist.append({'print_string':r'$\mathtt{T_{1}(p=0) = %0.3f \pm %0.3f \ (Seconds)\ From fit T_1(p=0) = %0.3f (Seconds)}$\\'%(self.R1.data,self.R1.get_error(),self.t1PowerFitVal[0]) + '\n\n'})
-        elif self.nmrExp:
+        elif self.isNMRExp:
             self.fl.figurelist.append({'print_string':r'\subparagraph{$T_{1,0}$ Parameters}\\' + '\n\n'})
             for i in range(len(self.t1Series.data)):
                 self.fl.figurelist.append({'print_string':r'$\mathtt{T_{1}(p=0) = %0.3f\ \pm\ %0.3f\ (Seconds)}$\\'%(self.t1Series.data[i],self.t1Series.get_error()[i]) + '\n\n'})
-        if self.eprExp:
+        if self.isEPRExp:
             self.fl.figurelist.append({'print_string':r'$\mathtt{EPR\ Double\ Integral.\ EPR_{DI}\ =\ %0.3f\ \frac{SC}{RG NA}}$\\'%(self.diValue) + '\n\n'})
             self.fl.figurelist.append({'print_string':r'$\mathtt{EPR\ center\ field\ =\ %0.2f\ G,\ spectral\ width\ =\ %0.2f\ G,\ and\ linewidhts\ =\ %0.2f,\ %0.2f,\ %0.2f\ G\ (low\ to\ high\ field)}$\\'%(self.centerField,self.spectralWidth,self.lineWidths[0],self.lineWidths[1],self.lineWidths[2]) + '\n\n'})
             if self.spinConc:
