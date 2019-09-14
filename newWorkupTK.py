@@ -124,7 +124,7 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
     def runExperiment(self):
         """ Make the calls to run the odnp experimental workup from 
         returnIntegralsDev """
-        self.retInt.determineExpType()
+        self.retInt.determine_exp_type()
         # self.retInt.editDatabase()
         if self.retInt.nmrExp: self.retInt.returnExpNumbers()
         self.retInt.returnExpParamsDict()

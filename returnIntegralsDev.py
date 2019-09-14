@@ -239,7 +239,7 @@ class workupODNP(): #{{{ The ODNP Experiment
 
 
         # Class Specific Functions (Children) #{{{
-    def determineExpType(self): #{{{
+    def determine_exp_type(self): #{{{
         """ Determine the experiment type and label variables accordingly. 
         Also make the directory for the file to go. """
         if self.EPRFile is not "":
