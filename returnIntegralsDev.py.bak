@@ -499,7 +499,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         #}}}
         #}}}
 
-    def returnExpNumbers(self): #{{{ Index files in directory
+    def set_exp_numbers(self): #{{{ Index files in directory
         """
         Function indexes files in the directory defined by self.odnpPath and returns a list of experiment titles as self.expTitles and the dnp and t1 experiment numbers as lists as self.dnpExps and self.t1Exps.
 

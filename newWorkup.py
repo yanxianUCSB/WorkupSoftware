@@ -144,7 +144,7 @@ class initialWindow(QDialog, Ui_mainWindow):
         """ Make the calls to run the odnp experimental workup from returnIntegralsDev """
         self.retInt.determine_exp_type()
         self.retInt.editDatabase()
-        if self.retInt.isNMRExp: self.retInt.returnExpNumbers()
+        if self.retInt.isNMRExp: self.retInt.set_exp_numbers()
         self.retInt.returnExpParamsDict()
         ### # if self.retInt.nmrExp: self.retInt.determineExperiment() # Should no longer be needed, hang on to incase you need something.
         ### # else: print "EPR Experiment"

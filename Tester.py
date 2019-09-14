@@ -34,15 +34,11 @@ class TestWorkupODNP(unittest.TestCase):
         with self.assertRaises(ValueError):
             workupODNP().determine_exp_type()
 
-    def test_resturn_exp_numbers(self):
+    def test_return_exp_numbers(self):
         self.wo.determine_exp_type()
         exp_titles, dnp_exp_nums, t1_exp_nums = self.wo.return_exp_numbers()
         self.assertNotEqual(dnp_exp_nums, [])
-        # self.assertNotEqual(t1_exp_nums, [])
-        # self.assertEqual(exp_titles, "1", msg=exp_titles[0])
-        #
-        # self.assertEqual(dnp_exp_nums, "1", msg=dnp_exp_nums)
-        print(exp_titles, dnp_exp_nums, t1_exp_nums)
+        self.assertNotEqual(t1_exp_nums, [])
 
 
 if __name__ == '__main__':

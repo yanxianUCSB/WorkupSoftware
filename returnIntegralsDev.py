@@ -20,6 +20,7 @@ import pymongo
 import csv
 import subprocess
 import tkinter as tk
+from struct import error as structerr
 
 #{{{ Various definitions and classes
 
@@ -239,7 +240,7 @@ class workupODNP(): #{{{ The ODNP Experiment
 
         # properties of experiment type
         self.setType = ""
-        self.expPath = ""
+        self.expPath = ""  # Path to experiment
         self.expName = ""
         self.eprName = ""
         self.odnpName = ""
@@ -296,12 +297,10 @@ class workupODNP(): #{{{ The ODNP Experiment
             os.mkdir(self.expPath)
         except FileExistsError:
             print("folder exists")
-            pass
         try:
             os.mkdir(self.odnpName)
         except FileExistsError:
             print("file exists")
-            pass
 
     def readSpecType(self):#{{{
         """ Read the proc file to find which spectrometer the ODNP experiment 
@@ -566,79 +565,74 @@ class workupODNP(): #{{{ The ODNP Experiment
             #}}}
             #}}}
 
-    def returnExpNumbers(self): #{{{ Index files in directory
-        """
-        Function indexes files in the directory defined by self.odnpPath and returns a list of experiment titles as self.expTitles and the dnp and t1 experiment numbers as lists as self.dnpExps and self.t1Exps.
+    def set_exp_numbers(self):
+        self.expTitles, self.dnpExps, self.t1Exps = self.return_exp_numbers()
 
-        Args:
-        self.odnpPath - string - path to ODNP experiment.
+    def return_exp_numbers(self):
+        """
+        Function indexes files in the directory defined by self.odnpPath and 
+        returns a list of experiment titles as self.expTitles and the dnp and 
+        t1 experiment numbers as lists as self.dnpExps and self.t1Exps.
 
         Returns:
-        self.expTitles - list - titles of ODNP experiments.
-        self.dnpExps - list - numbers of enhancement experiments.
-        self.t1Exps - list - numbers of t1 experiments..
+            exp_titles - list - titles of ODNP experiments.
+            dnp_exp_nums - list - numbers of enhancement experiments.
+            t1_exp_nums - list - numbers of t1 experiments..
         """
-        filesInDir = pys.listdir(self.expPath)
-        files = []
-        for name in filesInDir:
+        files_in_dir = pys.listdir(self.expPath)
+        exp_titles = []
+        dnp_exp_nums = []
+        t1_exp_nums = []
+
+        nmr_exp_folders = [fn for fn in files_in_dir if fn.isdigit()]
+        nmr_exp_folders.sort(key=lambda x: int(x))
+
+        for nmr_exp_folder in nmr_exp_folders:
+            title_path = self.expPath + '/' + str(nmr_exp_folder).split('.')[0]
             try:
-                files.append(float(name))
-            except:
-                print(name," not NMR experiment.")
-        files.sort()
-        self.expTitles = []
-        for name in files:
+                title = nmr.bruker_load_title(title_path)
+                exp_titles.append([title, nmr_exp_folder])
+            except FileNotFoundError:
+                print(str(nmr_exp_folder) + " bruker_load_title FileNotFoundError")
+
+        for title, nmr_exp_folder in exp_titles:
             try:
-                titleName = nmr.bruker_load_title(self.expPath + '/' + str(name).split('.')[0])
-                self.expTitles.append([titleName,str(name).split('.')[0]])
-            except:
-                print("Well shit")
-        self.dnpExps = []
-        self.t1Exps = []
-        for title,name in self.expTitles:
-            if 'DNP' in title:
-                try:
-                    temp = nmr.load_file(self.expPath + '/' + name) # this is the heavy line...
-                    self.dnpExps.append(int(name))
-                except:
-                    print("Not a valid experiment.")
-            if 'baseline' in title:
-                try:
-                    temp = nmr.load_file(self.expPath + '/' + name)
-                    self.dnpExps.append(int(name))
-                except:
-                    print("Not a valid experiment.")
-            if 'T1' in title:
-                try:
-                    temp = nmr.load_file(self.expPath + '/' + name)
-                    self.t1Exps.append(int(name))
-                except:
-                    print("Not a valid experiment.")
-            if '$T_1$' in title:
-                try:
-                    temp = nmr.load_file(self.expPath + '/' + name)
-                    self.t1Exps.append(int(name))
-                except:
-                    print("Not a valid experiment.")
-            if 'T_{1,0}' in title:
-                try:
-                    temp = nmr.load_file(self.expPath + '/' + name)
-                    self.t1Exps.append(int(name))
-                except:
-                    print("Not a valid experiment.")
-        self.dnpExps.sort()
-        self.t1Exps.sort()
-        for i in [700,701]:
+                # this is the heavy line...
+                nmr.load_file(self.expPath + '/' + nmr_exp_folder)
+            except FileNotFoundError:
+                print(title + nmr_exp_folder + " fails nmr.load_file()")
+                continue
+            except KeyError:
+                print(title + nmr_exp_folder + " generates KeyError")
+                continue
+            except structerr:
+                # TODO: // handle struct error
+                pass
+
+            for kwd in ['DNP', 'baseline']:
+                if kwd in title:
+                    dnp_exp_nums.append(int(nmr_exp_folder))
+            for kwd in ['T1', '$T_1$', 'T_{1,0}']:
+                if kwd in title:
+                    t1_exp_nums.append(int(nmr_exp_folder))
+        
+        dnp_exp_nums.sort()
+        t1_exp_nums.sort()
+
+        for i in [700, 701]:
             try:
-                self.dnpExps.remove(i)
-            except:
-                print("already removed")
-                #}}}
+                dnp_exp_nums.remove(i)
+            except ValueError:
+                pass
+
+        return exp_titles, dnp_exp_nums, t1_exp_nums
+
 
     def determineExperiment(self): #{{{ What Type of Experiment?
         """
         Legacy: No longer necessary. Query user for experiment type. This will need to change when you implement the new UI.
         """
+        raise PendingDeprecationWarning
         answer = True
         while answer:
             self.isDNPExp = input("\n\nIs this a DNP experiment or t1?\nIf DNP, hit enter. If t1 type 't1'. \n--> ")
