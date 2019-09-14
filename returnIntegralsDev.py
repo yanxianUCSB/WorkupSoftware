@@ -92,7 +92,7 @@ def dataToCSV(dataWriter, fileName,flag = 'wb'):
 #}}}
 
 # Save dict to csv #{{{
-def dictToCSV(fileName, dataDict,flag='w+'): 
+def dictToCSV(fileName, dataDict,flag='w+'):
     """
     Write a dictionary object to a csv file. This currently can handle a dictionary containing strings, lists, and dictionaries.
 
@@ -144,7 +144,7 @@ def residual(params, x, data, error):
 #{{{ Print a fancy title in the command line
 def makeTitle(titleString):
     linelength = 60
-    titleLength = int((linelength - len(titleString))/2.) 
+    titleLength = int((linelength - len(titleString))/2.)
     titlePrint = titleLength*"*"+ titleString+titleLength*"*"
     if len(titlePrint) > linelength:
         titlePrint = titlePrint[1:-1]
@@ -175,7 +175,7 @@ class Capturing(list):
 #{{{ Compile the pdf output
 def compilePDF(name,folder,fl):
     print("\n\nCompiling pdf")
-    systemOpt = os.name 
+    systemOpt = os.name
     with Capturing() as output:
         fl.show(name + '.pdf')
     texFile = open('plots.tex','wb')
@@ -184,7 +184,7 @@ def compilePDF(name,folder,fl):
         r'\usepackage{mynotebook}',
         r'\usepackage{mysoftware_style}',
         r'\newcommand{\autoDir}{/Users/StupidRobot/Projects/WorkupSoftware/notebook/auto_figures/}',
-        r'\usepackage{cite}', 
+        r'\usepackage{cite}',
         r'\usepackage{ulem}',
         r'\title{workup %s}'%name,
         r'\date{\today}',
@@ -327,8 +327,8 @@ class workupODNP(): #{{{ The ODNP Experiment
         ## Pull the specs, Find peaks, valleys, and calculate things with the EPR spectrum.#{{{
         #self.spec = eprDI.returnEPRSpec(self.eprName)
         #peak,valley = eprDI.findPeaks(self.spec,3)
-        #self.lineWidths = valley.getaxis('field') - peak.getaxis('field') 
-        #self.spectralWidth = peak.getaxis('field').max() - peak.getaxis('field').min() 
+        #self.lineWidths = valley.getaxis('field') - peak.getaxis('field')
+        #self.spectralWidth = peak.getaxis('field').max() - peak.getaxis('field').min()
         #self.centerField = peak.getaxis('field')[1] + self.lineWidths[1]/2.# assuming the center point comes out in the center. The way the code is built this should be robust
         #specStart = self.centerField - self.spectralWidth
         #specStop = self.centerField + self.spectralWidth
@@ -616,7 +616,7 @@ class workupODNP(): #{{{ The ODNP Experiment
                 print("already removed")
                 #}}}
 
-    def determineExperiment(self): #{{{ What Type of Experiment? 
+    def determineExperiment(self): #{{{ What Type of Experiment?
         """
         Legacy: No longer necessary. Query user for experiment type. This will need to change when you implement the new UI.
         """
@@ -689,38 +689,68 @@ class workupODNP(): #{{{ The ODNP Experiment
 
         #}}}
 
-    def dnpPowers(self): ### Work up the power files#{{{
-        # The enhancement series#{{{
-        self.fl.figurelist.append({'print_string':r'\subparagraph{Enhancement Power Measurement}' + '\n\n'})
-        expTimes,expTimeMin,absTime = nmr.returnExpTimes(self.odnpPath,self.dnpExps,dnpExp = True,operatingSys = self.systemOpt) # this is not a good way because the experiment numbers must be set right.
-        print("I read the length of absTime = %i"%len(absTime))
-        if not expTimeMin:
-            for expTitle in self.expTitles:
-                print(expTitle)
-            raise ValueError("\n\nThe experiment numbers are not set appropriately, please scroll through the experiment titles above and set values appropriately")
-        enhancementPowers,self.fl.figurelist = nmr.returnSplitPowers(self.odnpPath,'power',absTime = absTime,bufferVal = self.parameterDict['t1StartingGuess'],threshold = 20,titleString = r'Enhancement\ Powers',firstFigure = self.fl.figurelist)
+    def dnpPowers(self):
+        """Work up the power files"""
+        # The enhancement series
+        self.fl.figurelist.append({
+            'print_string': r'\subparagraph{Enhancement Power Measurement}' +
+                            '\n\n'
+        })
+        # this is not a good way because the experiment numbers must be set
+        # right.
+        exp_times, exp_time_min, abs_time = nmr.returnExpTimes(
+            self.odnpPath, self.dnpExps, dnpExp=True,
+            operatingSys=self.systemOpt)
+        print("I read the length of abs_time = %i" % len(abs_time))
+        if not exp_time_min:
+            [print(exp_title) for exp_title in self.expTitles]
+            raise ValueError(
+                "\n\nThe experiment numbers are not set appropriately, please "
+                "scroll through the experiment titles above and set values "
+                "appropriately")
+        enhancement_powers, self.fl.figurelist = nmr.returnSplitPowers(
+            self.odnpPath, 'power', absTime=abs_time,
+            bufferVal=self.parameterDict['t1StartingGuess'],
+            threshold=20, titleString=r'Enhancement\ Powers',
+            firstFigure=self.fl.figurelist)
         """
         Confusion / Clarification.
-        returnSplitPowers returns 1 less than the len of absTime. Abstime is all odnp experiments including #5 which is run with the amplifier off, thus when the code looks for a power during this time it finds that there is no data and returns Nan. I then insert a zero power value to the list below. This also occurs for the T1 measurements.
+        returnSplitPowers returns 1 less than the len of abs_time. Abstime is all 
+        odnp experiments including #5 which is run with the amplifier off, thus 
+        when the code looks for a power during this time it finds that there is 
+        no data and returns Nan. I then insert a zero power value to the list 
+        below. This also occurs for the T1 measurements.
 
-        The problem is if any data exists during absTime the function will return a value -->>> This is now fixed.
+        The problem is if any data exists during abs_time the function will 
+        return a value -->>> This is now fixed.
 
-        I notice that if I change the T1 starting guess I can aggrevate this problem, this is because the function returnSplitPowers uses the t1StartingGuess to determine the buffer value between experiments as this value will scale nicely with the experiment length.
+        I notice that if I change the T1 starting guess I can aggrevate this 
+        problem, this is because the function returnSplitPowers uses the 
+        t1StartingGuess to determine the buffer value between experiments as 
+        this value will scale nicely with the experiment length.
         
         """
-        enhancementPowers = list(enhancementPowers)
-        enhancementPowers.insert(0,-100)
-        enhancementPowers = array(enhancementPowers)
-        self.enhancementPowers = nmr.dbm_to_power(enhancementPowers,cavity_setup = self.specType)
-        ### Error handling for the enhancement powers and integration file#{{{
-        if len(self.enhancementPowers) != len(self.dnpExps): ### There is something wrong. Show the power series plot and print the dnpExps
-            self.fl.figurelist.append({'print_string':r'\subsection{\large{ERROR: Read Below to fix!!}}' + '\n\n'})#{{{ Error text
-            self.fl.figurelist.append({'print_string':"Before you start, the terminal (commandline) is still alive and will walk you through making edits to the necessary parameters to resolve this issue. \n\n \large(Issue) The number of power values, %d, and the number of enhancement experiments, %d, does not match. This is either because \n\n (1) I didn't return the correct number of powers or \n\n (2) You didn't enter the correct number of dnp experiments. \n\n If case (1) look at plot 'Enhancement Derivative powers' the black line is determined by 'parameterDict['thresholdE']' in the code. Adjust the threshold value such that the black line is below all of the blue peaks that you suspect are valid power jumps. \n\n If case (2) look through the experiment titles, listed below and make sure you have set 'dnpExps' correctly. Also shown below. Recall that the last experiment in both the DNP and T1 sets is empty."%(len(self.enhancementPowers),len(self.dnpExps)) + '\n\n'})
-            self.fl.figurelist.append({'print_string':r'\subsection{Experiment Titles and Experiment Number}' + '\n\n'})
+        enhancement_powers = list(enhancement_powers)
+        enhancement_powers.insert(0,-100)
+        enhancement_powers = array(enhancement_powers)
+        self.enhancementPowers = nmr.dbm_to_power(enhancement_powers,
+                                                  cavity_setup=self.specType)
+        # Error handling for the enhancement powers and integration file
+        if len(self.enhancementPowers) != len(self.dnpExps):
+            # There is something wrong. Show the power series plot and print
+            # the dnpExps
+            self.fl.figurelist.append({
+                'print_string': r'\subsection{\large{ERROR: '
+                                r'Read Below to fix!!}}' + '\n\n'})  # Error text
+            self.fl.figurelist.append({
+                'print_string': "Before you start, the terminal (commandline) is still alive and will walk you through making edits to the necessary parameters to resolve this issue. \n\n \large(Issue) The number of power values, %d, and the number of enhancement experiments, %d, does not match. This is either because \n\n (1) I didn't return the correct number of powers or \n\n (2) You didn't enter the correct number of dnp experiments. \n\n If case (1) look at plot 'Enhancement Derivative powers' the black line is determined by 'parameterDict['thresholdE']' in the code. Adjust the threshold value such that the black line is below all of the blue peaks that you suspect are valid power jumps. \n\n If case (2) look through the experiment titles, listed below and make sure you have set 'dnpExps' correctly. Also shown below. Recall that the last experiment in both the DNP and T1 sets is empty." % (
+                    len(self.enhancementPowers),
+                    len(self.dnpExps)) + '\n\n'})
+            self.fl.figurelist.append({'print_string': r'\subsection{Experiment Titles and Experiment Number}' + '\n\n'})
             for title in self.expTitles:
-                self.fl.figurelist.append({'print_string':r"%s, exp number %s"%(title[0].split('\n')[0],title[1])})#}}}
+                self.fl.figurelist.append({'print_string': r"%s, exp number %s"%(title[0].split('\n')[0],title[1])})#}}}
             for exp in self.dnpExps:
-                self.fl.figurelist.append({'print_string':r"exp number %i"%(exp)})#}}}
+                self.fl.figurelist.append({'print_string': r"exp number %i"%(exp)})#}}}
             compilePDF(self.name,self.odnpName,self.fl)
             raise ValueError("\n\n Something is weird with your powers file. Take a look at the pdf and see if you can make changes. Or just paste in a working powers file. Hint you might also find adjusting the threshold parameters helps.")
             #}}}
@@ -728,18 +758,35 @@ class workupODNP(): #{{{ The ODNP Experiment
 
         # The T1 Power Series#{{{
         self.fl.figurelist.append({'print_string':r'\subparagraph{$T_1$ Power Measurement}' + '\n\n'})
-        expTimes,expTimeMin,absTime = nmr.returnExpTimes(self.odnpPath,self.t1Exps,dnpExp = False,operatingSys = self.systemOpt) # this is not a good way because the experiment numbers must be set right.
-        if not expTimeMin:
+        exp_times, exp_time_min, abs_time = nmr.returnExpTimes(self.odnpPath,
+                                                               self.t1Exps,
+                                                               dnpExp=False,
+                                                               operatingSys=self.systemOpt)  # this is not a good way because the experiment numbers must be set right.
+        if not exp_time_min:
             print(self.expTitles)
             raise ValueError("\n\nThe experiment numbers are not set appropriately, please scroll through the experiment titles above and set values appropriately")
-        # I have the same problem with the dnp powers, if the starting attenuation is full attenuation '31.5' then there is no initial jump and we need to deal with it the same way. Right now I pull from constant 24 in the aquisition parameters. This should now work without having to ask the user.
-        t1Power,self.fl.figurelist = nmr.returnSplitPowers(self.odnpPath,'t1_powers',absTime = absTime,bufferVal = 20*self.parameterDict['t1StartingGuess'],threshold = 20,titleString = r'T_1\ Powers',firstFigure = self.fl.figurelist)
-        t1Power = list(t1Power)
-        t1Power.append(-99.0) # Add the zero power for experiment 304
-        t1Power = array(t1Power)
-        self.t1Power = nmr.dbm_to_power(t1Power,cavity_setup=self.specType)
-        ### Error handling for the T1 powers and integration file#{{{
-        if len(self.t1Power) != len(self.t1Exps): ### There is something wrong. Show the power series plot and print the dnpExps
+
+        """ 
+        I have the same problem with the dnp powers, if the starting attenuation 
+        is full attenuation '31.5' then there is no initial jump and we need to 
+        deal with it the same way. Right now I pull from constant 24 in the 
+        aquisition parameters. This should now work without having to ask the user.
+        """
+        t1_power, self.fl.figurelist = \
+            nmr.returnSplitPowers(self.odnpPath,
+                                  't1_powers',
+                                  absTime=abs_time,
+                                  bufferVal=20 * self.parameterDict['t1StartingGuess'],
+                                  threshold=20,
+                                  titleString=r'T_1\ Powers',
+                                  firstFigure=self.fl.figurelist)
+        t1_power = list(t1_power)
+        t1_power.append(-99.0)  # Add the zero power for experiment 304
+        t1_power = array(t1_power)
+        self.t1Power = nmr.dbm_to_power(t1_power, cavity_setup=self.specType)
+        # Error handling for the T1 powers and integration file
+        if len(self.t1Power) != len(self.t1Exps):
+            # There is something wrong. Show the power series plot and print the dnpExps
             self.fl.figurelist.append({'print_string':r'\subsection{\large{ERROR: Read Below to fix!!}}' + '\n\n'})#{{{ Error text
             self.fl.figurelist.append({'print_string':"Before you start, the terminal (commandline) is still alive and will walk you through making edits to the necessary parameters to resolve this issue. \n\n \large(Issue:) The number of power values, %d, and the number of $T_1$ experiments, %d, does not match. This is either because \n\n (1) I didn't return the correct number of powers or \n\n (2) You didn't enter the correct number of T1 experiments. \n\n If case (1) look at plot 'T1 Derivative powers' the black line is determined by 'thresholdT1' in the code. Adjust the threshold value such that the black line is below all of the blue peaks that you suspect are valid power jumps. \n\n If case (2) look through the experiment titles, listed below and make sure you have set 't1Exp' correctly. Also shown below. Recall that the last experiment in both the DNP and T1 sets is empty."%(len(self.t1Power),len(self.t1Exps)) + '\n\n'})
             self.fl.figurelist.append({'print_string':r'\subsection{Experiment Titles and Experiment Number}' + '\n\n'})
@@ -747,9 +794,7 @@ class workupODNP(): #{{{ The ODNP Experiment
                 self.fl.figurelist.append({'print_string':r"%s"%titleName})#}}}
             compilePDF(self.name,self.odnpName,self.fl)
             raise ValueError("\n\n Something is weird with your powers file. Take a look at the pdf and see if you can make changes. Or just paste in a working powers file. Hint you might also find adjusting the threshold parameters helps.")
-            #}}}
 
-            #}}}
 
     def enhancementIntegration(self): #{{{ Enhancement Integration
         self.fl.figurelist.append({'print_string':r'\subparagraph{Enhancement Series}' + '\n\n'})
@@ -799,7 +844,7 @@ class workupODNP(): #{{{ The ODNP Experiment
             else:
                 self.fl.figurelist.append({'print_string':r'$T_1$ experiment %d'%(expNum) + '\n\n'})
             try:
-                if self.parameterDict['t1SeparatePhaseCycle']: # The phase cycles are saved separately 
+                if self.parameterDict['t1SeparatePhaseCycle']: # The phase cycles are saved separately
                     rawT1,self.fl.figurelist = nmr.integrate(self.odnpPath,expNum,integration_width = self.parameterDict['integrationWidth'],phchannel = [-1],phnum = [4],max_drift = self.parameterDict['maxDrift'],first_figure = self.fl.figurelist,pdfstring = 't1Expno_%d'%(expNum))
                 else: # the phase cycle is already performed on the Bruker
                     rawT1,self.fl.figurelist = nmr.integrate(self.odnpPath,expNum,integration_width = self.parameterDict['integrationWidth'],phchannel = [],phnum = [],max_drift = self.parameterDict['maxDrift'],first_figure = self.fl.figurelist,pdfstring = 't1Expno_%d'%(expNum))
@@ -903,7 +948,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         else:
             self.R1 = pys.nddata(self.t1Series['expNum',lambda x: x == 304].data).set_error(self.t1Series['expNum',lambda x: x == 304].get_error())
         self.kSigmaUCCurve = (1-self.enhancementPowerSeries.copy())*(1./self.R1)*(1./659.33)
-        self.kSigmaUCCurve.popdim('value') # For some reason it picks this up from R1, I'm not sure how to do the above nicely 
+        self.kSigmaUCCurve.popdim('value') # For some reason it picks this up from R1, I'm not sure how to do the above nicely
         self.kSigmaUCCurve.set_error(None)
         self.kSigmaUCCurve = nmrfit.ksp(self.kSigmaUCCurve)
         self.kSigmaUCCurve.fit()
@@ -932,7 +977,7 @@ class workupODNP(): #{{{ The ODNP Experiment
         pys.legend(loc=4)
     #}}}
 
-    def writeToDatabase(self): #{{{ Write the experimental parameters to the database 
+    def writeToDatabase(self): #{{{ Write the experimental parameters to the database
         ### First check if there is any collection matching the experiment name.
         exists = list(self.collection.find({'expName':self.databaseParamsDict['expName'],'operator':self.databaseParamsDict['operator']}))
         if len(exists) != 0: # There is something in the collection with the given experiment name and operator. Lets remove it so there is no duplicates
