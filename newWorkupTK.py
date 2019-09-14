@@ -18,29 +18,17 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
     child class workupODNP located in returnIntegralsDev.py
     """
     def __init__(self, master=None):
-        # Initialize the workup script
-        self.retInt = returnIntegralsDev.workupODNP(self)
-
-        # variable definitions
-        self.dataDir    = tk.StringVar()
-        self.odnpFile   = tk.StringVar()
-        self.t1File     = tk.StringVar()
-        self.eprFile    = tk.StringVar()
-        self.eprCalFile = tk.StringVar()
-
-        # variable definitions from last version  # TODO: // remove this chunk
-        self.EPRFile = False
-        self.ODNPFile = False
-        self.T1File = False
-        self.dataBase = False
-        self.dataDirFile = 'datadir.txt'
-        self.DataDir = None
-        self.calSaveFile = 'calFile.txt'
-        self.EPRCalFile = False
-        self.dataBaseList = ['Select Value','Yes','No']#}}}
-
         super().__init__(master)
         self.master = master
+
+        # variable definitions
+        self.dataDir    = tk.StringVar(self, value="/Users/yanxlin/github/workupsoftware/test/in")
+        self.odnpFile   = tk.StringVar(self, value="/Users/yanxlin/github/workupsoftware/test/in/180329_HttQ25_30R1_22C_ODNP_3")
+        self.t1File     = tk.StringVar(self)
+        self.eprFile    = tk.StringVar(self)
+        self.eprCalFile = tk.StringVar(self)
+
+        # create widgets
         self.pack()
         self.create_widgets()
 
@@ -110,6 +98,20 @@ class initialWindow(tk.Frame):  # TODO: rename as "ODNP_Analyzer"
     def runProgram(self):  # {{{  TODO:// merge with runExperiment
         """ Handling for the run program button to launch the return integrals 
         workup program """
+        # Initialize the workup script
+        self.retInt = returnIntegralsDev.workupODNP(guiParent=self)
+
+        # variable definitions from last version  # TODO: // remove this chunk
+        self.DataDir    = self.dataDir.get()
+        self.ODNPFile   = self.odnpFile.get()
+        self.T1File     = self.t1File.get()
+        self.EPRFile    = self.eprFile.get()
+        self.EPRCalFile = self.eprCalFile.get()
+        self.dataBase = False  # TODO: // remove this chunk
+        self.dataDirFile = 'datadir.txt'
+        self.calSaveFile = 'calFile.txt'
+        self.dataBaseList = ['Select Value','Yes','No']#}}}
+
         self.runExperiment()
         self.refreshDisplay()
 
