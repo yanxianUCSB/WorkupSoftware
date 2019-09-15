@@ -5,12 +5,12 @@ This is implemented in newWorkup and called exclusively there.
 
 """
 # Functions to import #{{{
-from pyspecdata import fornotebook as fnb
-from pyspecdata import eprDI
-from pyspecdata import nmrfit
-from pyspecdata import nmr
-from pyspecdata import matlablike as pys
-from pyspecdata import database as dtb
+from pyspecdata.pyspecdata import fornotebook as fnb
+from pyspecdata.pyspecdata import eprDI
+from pyspecdata.pyspecdata import nmrfit
+from pyspecdata.pyspecdata import nmr
+from pyspecdata.pyspecdata import matlablike as pys
+from pyspecdata.pyspecdata import database as dtb
 from lmfit import minimize,Parameters ### This makes another hoop for installing software that you don't really use... I actually really think this should be implemented as nddata functions. Or as fit classes.
 from io import StringIO
 from numpy import *
