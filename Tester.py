@@ -34,11 +34,22 @@ class TestWorkupODNP(unittest.TestCase):
         with self.assertRaises(ValueError):
             workupODNP().determine_exp_type()
 
-    def test_return_exp_numbers(self):
+    def disabled_test_return_exp_numbers(self):
         self.wo.determine_exp_type()
         exp_titles, dnp_exp_nums, t1_exp_nums = self.wo.return_exp_numbers()
         self.assertNotEqual(dnp_exp_nums, [])
         self.assertNotEqual(t1_exp_nums, [])
+
+    def disabled_test_return_exp_params_dict(self):
+        self.wo.determine_exp_type()
+        self.wo.set_exp_numbers()
+        self.wo.returnExpParamsDict()
+
+    def test_returnExpTimes(self):
+        self.disabled_test_return_exp_params_dict()
+        exp_times, exp_time_min, abs_time = returnExpTimes(
+            self.wo.expPath, self.wo.dnpExps, dnpExp=True,
+            operatingSys=self.wo.systemOpt)
 
 
 if __name__ == '__main__':
