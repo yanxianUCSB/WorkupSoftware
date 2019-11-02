@@ -34,13 +34,6 @@ class TestWorkupODNP(unittest.TestCase):
         self.wo.set_exp_numbers()
         self.wo.returnExpParamsDict()
 
-    def test_returnExpTimes(self):
-        self.wo.determine_exp_type()
-        self.wo.set_exp_numbers()
-        self.wo.returnExpParamsDict()
-        exp_times, exp_time_min, abs_time = returnExpTimes(
-            self.wo.expPath, self.wo.dnpExps, dnpExp=True,
-            operatingSys=self.wo.systemOpt)
 
 
 if __name__ == '__main__':
